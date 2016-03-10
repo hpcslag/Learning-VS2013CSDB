@@ -32,29 +32,17 @@ using System.Data.SqlClient;
 SqlConnection con = new SqlConnection(DBHandler.GetConnectionString());
 try
  {
-   OpenFileDialog fop = new OpenFileDialog();
-   fop.InitialDirectory = @"C:\"; 
-   fop.Filter = "[JPG,JPEG]|*.jpg";
-   if (fop.ShowDialog() == DialogResult.OK)
-   {
-     FileStream FS = new FileStream(@fop.FileName, FileMode.Open, FileAccess.Read);
-     byte[] img = new byte[FS.Length];
-     FS.Read(img, 0, Convert.ToInt32(FS.Length));
-
-     if (con.State == ConnectionState.Closed)
-       con.Open();
-     SqlCommand cmd = new SqlCommand("SaveImage", con);
-     cmd.CommandType = CommandType.StoredProcedure;
-     cmd.Parameters.Add("@img", SqlDbType.Image).Value = img;
-     cmd.ExecuteNonQuery();
-     loadImageIDs();
-     MessageBox.Show("Image Save Successfully!!", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-   }
-   else
-   {
-     MessageBox.Show("Please Select a Image to save!!", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-   }
-
+  Image myImage = Image.FromFile(/*Give file path*/ filePath);
+  System.IO.MemoryStream imgMemoryStream = new System.IO.MemoryStream();
+  myImage.save(imgMemoryStream,System.DrawingImaging.ImageFormat.Jpeg);
+  byte[] imgByteData = imgMemoryStream.GetBuffer();
+  
+  cmd.CommandText = "UPDATE Images Set image = @myPicture WHERE id = 1";
+  cmd.Parameters.Add("@myPicture",SqlType.Image).Value = imgByteData;
+  //or cmd.Parameters.Add("@myPicture",SqlDbType.Binary).Value = imgByteData;
+  cmd.Prepare();
+  cmd.ExcuteNonQuery();
+  MessageBox.Show("IMAGE SAVED IN DATABASE");
  }
  catch (Exception ex)
  {
